@@ -7,19 +7,19 @@ class SharedCalendars extends StatefulWidget {
 
 class _SharedCalendarsState extends State<SharedCalendars> {
   // Fake data for other users' calendars
-  final Map<String, Map<String, List<String>>> mockSharedAvailability = {
+  Map<String, Map<String, List<String>>> mockSharedAvailability = {
     'Friday': {
-      'Morning': ['Alice 🎉', 'Bob 🏀'],
+      'Morning': ['Sarah 🎉', 'Bob 🏀'],
       'Day': ['Charlie 😎'],
-      'Night': ['Alice 🎉', 'Bob 🏀', 'Charlie 😎'],
+      'Night': ['Sarah 🎉', 'Bob 🏀', 'Charlie 😎'],
     },
     'Saturday': {
-      'Morning': ['Alice 🏀', 'Charlie 😎'],
+      'Morning': ['Sarah 🏀', 'Charlie 😎'],
       'Day': ['Bob 🎉', 'Charlie 🏀'],
-      'Night': ['Alice 😎', 'Bob 🎉'],
+      'Night': ['Sarah 😎', 'Bob 🎉'],
     },
     'Sunday': {
-      'Morning': ['Alice 🎉'],
+      'Morning': ['Sarah 🎉'],
       'Day': [],
       'Night': ['Charlie 🏀', 'Bob 🎉'],
     },
@@ -28,6 +28,110 @@ class _SharedCalendarsState extends State<SharedCalendars> {
   // Map to track liked people
   Map<String, Set<String>> likes = {};
   Map<String, bool> isAnimating = {}; // Track animation state
+
+  void _showFilterDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Text(
+            'Filter by Activity',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextButton(
+                onPressed: () {
+                  // Apply Party filter
+                  Navigator.pop(context);
+                  setState(() {
+                    _applyFilter('🎉');
+                  });
+                },
+                child: Text(
+                  'Party 🎉',
+                  style: TextStyle(color: Colors.pinkAccent),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  // Apply Chill filter
+                  Navigator.pop(context);
+                  setState(() {
+                    _applyFilter('😎');
+                  });
+                },
+                child: Text(
+                  'Chill 😎',
+                  style: TextStyle(color: Colors.blueAccent),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  // Apply Sports filter
+                  Navigator.pop(context);
+                  setState(() {
+                    _applyFilter('🏀');
+                  });
+                },
+                child: Text(
+                  'Sports 🏀',
+                  style: TextStyle(color: Colors.orangeAccent),
+                ),
+              ),
+              Divider(color: Colors.grey),
+              TextButton(
+                onPressed: () {
+                  // Reset to unfiltered view
+                  Navigator.pop(context);
+                  setState(() {
+                    _resetFilter();
+                  });
+                },
+                child: Text(
+                  'Show All',
+                  style: TextStyle(color: Colors.greenAccent),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _applyFilter(String activityEmoji) {
+    // Filter mockSharedAvailability by the selected activity
+    mockSharedAvailability.forEach((day, times) {
+      times.forEach((time, people) {
+        times[time] =
+            people.where((person) => person.contains(activityEmoji)).toList();
+      });
+    });
+  }
+
+  void _resetFilter() {
+    // Restore mockSharedAvailability to its original state
+    mockSharedAvailability = {
+      'Friday': {
+        'Morning': ['Sarah 🎉', 'Bob 🏀'],
+        'Day': ['Charlie 😎'],
+        'Night': ['Sarah 🎉', 'Bob 🏀', 'Charlie 😎'],
+      },
+      'Saturday': {
+        'Morning': ['Sarah 🏀', 'Charlie 😎'],
+        'Day': ['Bob 🎉', 'Charlie 🏀'],
+        'Night': ['Sarah 😎', 'Bob 🎉'],
+      },
+      'Sunday': {
+        'Morning': ['Sarah 🎉'],
+        'Day': [],
+        'Night': ['Charlie 🏀', 'Bob 🎉'],
+      },
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +231,13 @@ class _SharedCalendarsState extends State<SharedCalendars> {
             ),
           );
         }).toList(),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showFilterDialog(context); // Opens the filter dialog
+        },
+        child: Icon(Icons.filter_list, color: Colors.white),
+        backgroundColor: Colors.blue,
       ),
     );
   }

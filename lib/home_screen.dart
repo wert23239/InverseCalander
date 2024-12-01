@@ -8,17 +8,27 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Map to store availability: Key is "day_time", Value is the selected activity
-  Map<String, String> availability = {};
-
+  // Map to store availability: Key is "day_time", Value is the selected activity and likes
+  Map<String, Map<String, dynamic>> availability = {
+    "Friday_Morning": {"activity": "Party", "likes": []},
+    "Friday_Night": {
+      "activity": "Chill",
+      "likes": ["Sarah"]
+    },
+  };
   // Callback to save availability
   void saveAvailability(String day, String time, String activity) {
     setState(() {
+      final key = "${day}_$time";
       if (activity == "None") {
-        availability.remove("${day}_$time");
+        availability.remove(key);
         return;
       }
-      availability["${day}_$time"] = activity;
+      if (!availability.containsKey(key)) {
+        availability[key] = {"activity": activity, "likes": []};
+      } else {
+        availability[key]!["activity"] = activity;
+      }
     });
     print("added $availability");
   }
@@ -83,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class DayAvailability extends StatelessWidget {
   final String day;
-  final Map<String, String> availability;
+  final Map<String, Map<String, dynamic>> availability;
   final Function(String, String, String) saveAvailability;
 
   const DayAvailability({
@@ -140,7 +150,7 @@ class DayAvailability extends StatelessWidget {
 class TimeSlot extends StatelessWidget {
   final String day;
   final String time;
-  final Map<String, String> availability;
+  final Map<String, Map<String, dynamic>> availability;
   final Function(String, String, String) saveAvailability;
 
   const TimeSlot({
@@ -153,7 +163,9 @@ class TimeSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final key = "${day}_$time";
-    final activity = availability[key];
+    final slotData = availability[key] ?? {};
+    final activity = slotData["activity"];
+    final likes = slotData["likes"] ?? [];
 
     // Determine background color and emoji based on activity
     Color backgroundColor;
@@ -204,34 +216,43 @@ class TimeSlot extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              time,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold, // Bold text
-                color: Colors.white,
-              ),
+            // Display the time and activity
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  time,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                if (activity != null)
+                  Row(
+                    children: [
+                      Text(
+                        emoji,
+                        style: TextStyle(fontSize: 20),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        activity,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                if (likes.isNotEmpty)
+                  Text(
+                    "${likes.length} Likes",
+                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+              ],
             ),
-            if (activity != null)
-              Row(
-                children: [
-                  Text(
-                    emoji,
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    activity,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              )
-            else
-              Icon(Icons.add_circle, color: Colors.white),
           ],
         ),
       ),
