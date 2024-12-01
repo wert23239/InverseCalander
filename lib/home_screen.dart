@@ -185,16 +185,20 @@ class TimeSlot extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AvailabilityForm(
-              day: day,
-              time: time,
-              saveAvailability: saveAvailability,
+        if (likes.isNotEmpty) {
+          _showLikesDialog(context, likes); // Show likes dialog
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AvailabilityForm(
+                day: day,
+                time: time,
+                saveAvailability: saveAvailability,
+              ),
             ),
-          ),
-        );
+          );
+        }
       },
       borderRadius: BorderRadius.circular(8), // Match the container's border
       splashColor: Colors.white24, // Ripple effect color
@@ -247,15 +251,49 @@ class TimeSlot extends StatelessWidget {
                     ],
                   ),
                 if (likes.isNotEmpty)
-                  Text(
-                    "${likes.length} Likes",
-                    style: TextStyle(fontSize: 12, color: Colors.white70),
-                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      "Liked by: ${likes.join(', ')}",
+                      style: TextStyle(fontSize: 14, color: Colors.white70),
+                    ),
+                  )
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // Show likes in a dialog
+  void _showLikesDialog(BuildContext context, List<String> likes) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: Text(
+            'Likes',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: likes
+                .map((like) => Text(
+                      like,
+                      style: TextStyle(color: Colors.white),
+                    ))
+                .toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close', style: TextStyle(color: Colors.blue)),
+            ),
+          ],
+        );
+      },
     );
   }
 }
