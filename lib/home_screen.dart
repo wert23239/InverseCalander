@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'availability_form.dart';
 import 'shared_calendars.dart';
+import 'friends_list.dart';
+import 'custom_list.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -10,14 +12,20 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // Map to store availability: Key is "day_time", Value is the selected activity and likes
   Map<String, Map<String, dynamic>> availability = {
-    "Friday_Morning": {"activity": "Party", "likes": []},
+    "Friday_Morning": {
+      "activity": "Party",
+      "likes": ["Bob"],
+      "visibility": ["Party Friends"], // Shared only with Party Friends
+    },
     "Friday_Night": {
       "activity": "Chill",
-      "likes": ["Sarah"]
+      "likes": ["Charlie"],
+      "visibility": ["Soccer Friends"], // Shared only with Soccer Friends
     },
   };
   // Callback to save availability
-  void saveAvailability(String day, String time, String activity) {
+  void saveAvailability(
+      String day, String time, String activity, List<String> visibility) {
     setState(() {
       final key = "${day}_$time";
       if (activity == "None") {
@@ -25,7 +33,11 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
       if (!availability.containsKey(key)) {
-        availability[key] = {"activity": activity, "likes": []};
+        availability[key] = {
+          "activity": activity,
+          "likes": [],
+          "visibility": visibility,
+        };
       } else {
         availability[key]!["activity"] = activity;
       }
@@ -39,6 +51,44 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text('InverseCalendar'),
         centerTitle: true,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.black),
+              child: Text(
+                "Menu",
+                style: TextStyle(color: Colors.white, fontSize: 24),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text("Friends List"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FriendsListScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.group),
+              title: Text("Custom Lists"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CustomListsScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -59,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   DayAvailability(
                     day: 'Friday',
                     availability: availability,
-                    saveAvailability: saveAvailability,
+                    saveAvailability: saveAvailability, // Use the wrapper
                   ),
                   DayAvailability(
                     day: 'Saturday',
@@ -94,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
 class DayAvailability extends StatelessWidget {
   final String day;
   final Map<String, Map<String, dynamic>> availability;
-  final Function(String, String, String) saveAvailability;
+  final Function(String, String, String, List<String>) saveAvailability;
 
   const DayAvailability({
     required this.day,
@@ -145,13 +195,17 @@ class DayAvailability extends StatelessWidget {
       ),
     );
   }
+
+  void saveAvailabilityWrapper(String day, String time, String activity) {
+    saveAvailability(day, time, activity, ["All Friends"]);
+  }
 }
 
 class TimeSlot extends StatelessWidget {
   final String day;
   final String time;
   final Map<String, Map<String, dynamic>> availability;
-  final Function(String, String, String) saveAvailability;
+  final Function(String, String, String, List<String>) saveAvailability;
 
   const TimeSlot({
     required this.day,
@@ -166,6 +220,7 @@ class TimeSlot extends StatelessWidget {
     final slotData = availability[key] ?? {};
     final activity = slotData["activity"];
     final likes = slotData["likes"] ?? [];
+    final visibility = slotData["visibility"] ?? ["All Friends"];
 
     // Determine background color and emoji based on activity
     Color backgroundColor;
@@ -185,20 +240,17 @@ class TimeSlot extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        if (likes.isNotEmpty) {
-          _showLikesDialog(context, likes); // Show likes dialog
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AvailabilityForm(
-                day: day,
-                time: time,
-                saveAvailability: saveAvailability,
-              ),
+        // Navigate to AvailabilityForm to edit the slot
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AvailabilityForm(
+              day: day,
+              time: time,
+              saveAvailability: saveAvailability,
             ),
-          );
-        }
+          ),
+        );
       },
       borderRadius: BorderRadius.circular(8), // Match the container's border
       splashColor: Colors.white24, // Ripple effect color
@@ -258,6 +310,23 @@ class TimeSlot extends StatelessWidget {
                       style: TextStyle(fontSize: 14, color: Colors.white70),
                     ),
                   )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      "No likes yet",
+                      style: TextStyle(fontSize: 14, color: Colors.white70),
+                    ),
+                  ),
+                // Display visibility
+                if (visibility.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      "Visible to: ${visibility.join(', ')}",
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
+                    ),
+                  ),
               ],
             ),
           ],

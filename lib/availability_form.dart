@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class AvailabilityForm extends StatelessWidget {
+class AvailabilityForm extends StatefulWidget {
   final String day;
   final String time;
-  final Function(String, String, String) saveAvailability;
+  final Function(String, String, String, List<String>) saveAvailability;
 
   const AvailabilityForm({
     required this.day,
@@ -12,74 +12,86 @@ class AvailabilityForm extends StatelessWidget {
   });
 
   @override
+  _AvailabilityFormState createState() => _AvailabilityFormState();
+}
+
+class _AvailabilityFormState extends State<AvailabilityForm> {
+  String? selectedActivity;
+  List<String> selectedVisibility = [];
+
+  final List<String> customLists = [
+    "Party Friends",
+    "Soccer Friends",
+    "All Friends"
+  ];
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Availability'),
-        centerTitle: true,
+        title: Text("Set Availability"),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ActivityOption(
-              activity: 'Party',
-              onSelect: () {
-                saveAvailability(day, time, 'Party');
-                Navigator.pop(context);
+            DropdownButton<String>(
+              value: selectedActivity,
+              hint: Text("Select Activity"),
+              items: ["Party", "Workout", "Chill"].map((activity) {
+                return DropdownMenuItem(
+                  value: activity,
+                  child: Text(activity),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedActivity = value;
+                });
               },
             ),
-            ActivityOption(
-              activity: 'Workout',
-              onSelect: () {
-                saveAvailability(day, time, 'Workout');
-                Navigator.pop(context);
-              },
+            SizedBox(height: 16),
+            Text("Select Visibility:"),
+            Wrap(
+              spacing: 8.0,
+              children: customLists.map((list) {
+                final isSelected = selectedVisibility.contains(list);
+                return FilterChip(
+                  label: Text(list),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        selectedVisibility.add(list);
+                      } else {
+                        selectedVisibility.remove(list);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
             ),
-            ActivityOption(
-              activity: 'Chill',
-              onSelect: () {
-                saveAvailability(day, time, 'Chill');
-                Navigator.pop(context);
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedActivity != null && selectedVisibility.isNotEmpty) {
+                  widget.saveAvailability(
+                    widget.day,
+                    widget.time,
+                    selectedActivity!,
+                    selectedVisibility,
+                  );
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text("Please select an activity and visibility"),
+                  ));
+                }
               },
-            ),
-            ActivityOption(
-              activity: 'None',
-              onSelect: () {
-                saveAvailability(day, time, 'None');
-                Navigator.pop(context);
-              },
+              child: Text("Save"),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class ActivityOption extends StatelessWidget {
-  final String activity;
-  final VoidCallback onSelect;
-
-  const ActivityOption({
-    required this.activity,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onSelect,
-      child: Card(
-        color: Colors.grey[800],
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text(
-            activity,
-            style: TextStyle(fontSize: 16, color: Colors.white),
-          ),
         ),
       ),
     );
